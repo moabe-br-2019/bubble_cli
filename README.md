@@ -20,15 +20,91 @@ Built with [click](https://click.palletsprojects.com/), [httpx](https://www.pyth
 
 ## Installation
 
-Requires Python ≥ 3.10.
+### Prerequisites
+
+- **Python 3.10 or newer** — check with `python --version`. If missing, install it from [python.org](https://www.python.org/downloads/) or your package manager (`brew install python`, `winget install Python.Python.3.12`, `apt install python3.12`).
+- **pip** (ships with Python). Verify with `python -m pip --version`.
+- A **Bubble.io app** with the Data API enabled and a Data API token — see [Configuration](#configuration).
+
+> The dependencies (`click`, `httpx`, `rich`) are pulled in automatically by `pip`.
+
+### Option 1 — install with `pipx` *(recommended)*
+
+[`pipx`](https://pipx.pypa.io/) installs CLI tools in their own isolated virtualenvs so they don't collide with your other Python packages, while still exposing the command globally.
 
 ```bash
-pip install .
-# or, in editable mode while developing:
+# install pipx once, if you don't already have it
+python -m pip install --user pipx
+python -m pipx ensurepath
+# (open a new terminal so PATH updates take effect)
+
+# install bubble-cli straight from GitHub
+pipx install git+https://github.com/moabe-br-2019/bubble_cli.git
+```
+
+The `bubble` command is now available from any folder.
+
+### Option 2 — install from a clone (for development)
+
+```bash
+git clone https://github.com/moabe-br-2019/bubble_cli.git
+cd bubble_cli
+
+# create and activate a virtualenv
+python -m venv .venv
+
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
+
+# Windows (cmd.exe)
+.venv\Scripts\activate.bat
+
+# install in editable mode (source changes take effect immediately)
 pip install -e .
 ```
 
-This installs the `bubble` console script.
+### Option 3 — `pip install` from GitHub without cloning
+
+```bash
+python -m venv .venv
+# activate the venv (see Option 2)
+pip install git+https://github.com/moabe-br-2019/bubble_cli.git
+```
+
+### Verify
+
+```bash
+bubble --version
+bubble --help
+```
+
+You should see the version banner and a list of subcommands. If the shell reports `bubble: command not found`, your venv isn't activated, or `pipx`'s install path is missing from `PATH` — re-run `pipx ensurepath` and restart your terminal.
+
+### Upgrading
+
+```bash
+# pipx
+pipx upgrade bubble-cli
+
+# pip from GitHub
+pip install -U git+https://github.com/moabe-br-2019/bubble_cli.git
+
+# editable clone
+git pull && pip install -e .
+```
+
+### Uninstalling
+
+```bash
+pipx uninstall bubble-cli
+# or, if installed with plain pip:
+pip uninstall bubble-cli
+```
+
+> **Windows note:** the CLI emits Unicode characters. Modern Windows Terminal / PowerShell handle this out of the box; if you see mojibake in the legacy `cmd.exe`, run `chcp 65001` once or use Windows Terminal.
 
 ## Quick start
 
@@ -140,4 +216,4 @@ src/bubble_cli/
 
 ## License
 
-No license file is included yet — treat the code as all rights reserved unless you receive permission from the author.
+[MIT](LICENSE) © 2026 Moabe
