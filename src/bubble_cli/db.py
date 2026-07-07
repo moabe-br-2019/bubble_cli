@@ -31,6 +31,9 @@ class Database:
         self.path = path
         self.conn = sqlite3.connect(path)
         self.conn.execute("PRAGMA journal_mode=WAL")
+        # Espera até 30s por um lock em vez de estourar "database is locked" —
+        # deixa vários workers do pull paralelo escreverem em fila.
+        self.conn.execute("PRAGMA busy_timeout=30000")
         self._init_meta_tables()
 
     def close(self):

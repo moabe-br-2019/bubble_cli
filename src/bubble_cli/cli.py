@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -170,12 +171,21 @@ def list_types(folder: Optional[Path]):
         "'full': re-fetch every record. 'incremental': only records modified since the last sync."
     ),
 )
+@click.option(
+    "-j",
+    "--jobs",
+    type=int,
+    default=4,
+    show_default=True,
+    help="Tables to download in parallel (1 = sequential). Lower it if Bubble returns 429.",
+)
 def pull(
     folder: Optional[Path],
     types_csv: Optional[str],
     all_types: bool,
     dry_run: bool,
     mode: str,
+    jobs: int,
 ):
     """Download records into SQLite (or simulate with --dry-run)."""
     folder = folder or Path.cwd()
@@ -189,6 +199,7 @@ def pull(
         all_types=all_types,
         dry_run=dry_run,
         mode=mode,
+        jobs=jobs,
     )
 
 
@@ -380,6 +391,7 @@ def _do_pull(
     all_types: bool = False,
     dry_run: bool = False,
     mode: str = "auto",
+    jobs: int = 4,
 ) -> None:
     db_file = folder / config.db_path
 
@@ -424,9 +436,9 @@ def _do_pull(
         else:
             resolved_mode = "full"
 
-        with BubbleClient(config) as client:
-            for type_name in chosen:
-                if dry_run:
+        if dry_run:
+            with BubbleClient(config) as client:
+                for type_name in chosen:
                     with console.status(
                         f"[{ACCENT}]{t('pull.counting', type=type_name)}[/]",
                         spinner="dots",
@@ -439,9 +451,14 @@ def _do_pull(
                     console.print(
                         f"[bold {ACCENT}]" + t("pull.dry_count", type=type_name, n=total)
                     )
-                    continue
+            return
 
-                _pull_one(db, client, type_name, mode=resolved_mode)
+        if jobs > 1 and len(chosen) > 1:
+            _pull_parallel(db_file, config, chosen, resolved_mode, jobs)
+        else:
+            with BubbleClient(config) as client:
+                for type_name in chosen:
+                    console.print(_pull_one(db, client, type_name, mode=resolved_mode))
 
 
 def _resolve_pull_mode(db: Database, requested: str) -> Optional[str]:
@@ -504,14 +521,17 @@ def _pull_one(
     type_name: str,
     *,
     mode: str = "full",
-) -> None:
+    show_progress: bool = True,
+) -> str:
+    """Baixa um tipo e devolve a linha-resumo (Rich markup). Só desenha barra se show_progress."""
     constraints: Optional[list[dict]] = None
     effective_mode = mode
 
     if mode == "incremental":
         since = db.get_last_sync(type_name)
         if not since or not db.type_has_data(type_name):
-            console.print(f"[dim]{t('pull.mode.no_last_sync', type=type_name)}[/]")
+            if show_progress:
+                console.print(f"[dim]{t('pull.mode.no_last_sync', type=type_name)}[/]")
             effective_mode = "full"
         else:
             constraints = [
@@ -521,58 +541,97 @@ def _pull_one(
                     "value": since,
                 }
             ]
-            console.print(
-                f"[dim]{t('pull.mode.using_incremental', since=since)}[/]"
-            )
+            if show_progress:
+                console.print(f"[dim]{t('pull.mode.using_incremental', since=since)}[/]")
 
     try:
         total = client.count(type_name, constraints=constraints)
     except BubbleAPIError as e:
-        console.print(f"[red]✗ {type_name}:[/] {e}")
-        return
+        return f"[red]✗ {type_name}:[/] {e}"
 
     if total == 0:
-        if effective_mode == "incremental":
-            console.print(f"[dim]{t('pull.incremental.empty', type=type_name)}[/]")
-        else:
-            console.print(f"[dim]{t('pull.empty', type=type_name)}[/]")
         db.record_sync(type_name)
-        return
+        key = "pull.incremental.empty" if effective_mode == "incremental" else "pull.empty"
+        return f"[dim]{t(key, type=type_name)}[/]"
+
+    progress = None
+    task = None
+    if show_progress:
+        progress = Progress(
+            SpinnerColumn(style=ACCENT_PINK),
+            TextColumn(f"[bold {ACCENT}]{type_name}[/]"),
+            BarColumn(bar_width=None, complete_style=ACCENT, finished_style="green"),
+            TextColumn("[cyan]{task.completed}[/]/[dim]{task.total}[/]"),
+            TimeElapsedColumn(),
+            console=console,
+            transient=False,
+        )
+        progress.start()
+        task = progress.add_task(type_name, total=total)
+
+    BATCH_SIZE = 200
+    batch: list[dict] = []
+    count = 0
+    try:
+        for rec in client.iter_records(type_name, constraints=constraints):
+            batch.append(rec)
+            count += 1
+            if len(batch) >= BATCH_SIZE:
+                db.upsert_records(type_name, batch)
+                batch.clear()
+            if progress is not None:
+                progress.update(task, completed=count)
+        if batch:
+            db.upsert_records(type_name, batch)
+            if progress is not None:
+                progress.update(task, completed=count)
+    except BubbleAPIError as e:
+        return f"[red]✗ {type_name}:[/] {e}"
+    finally:
+        if progress is not None:
+            progress.stop()
+
+    db.record_sync(type_name)
+    msg_key = "pull.incremental.saved" if effective_mode == "incremental" else "pull.saved"
+    return t(msg_key, n=count, type=type_name)
+
+
+def _pull_parallel(
+    db_file: Path,
+    config: cfg.Config,
+    chosen: list[str],
+    mode: str,
+    jobs: int,
+) -> None:
+    """Baixa várias tabelas em paralelo. Cada worker abre a própria conexão SQLite e client;
+    o busy_timeout do SQLite serializa as escritas. Só a thread principal toca a barra/console."""
+
+    def worker(type_name: str) -> str:
+        db = Database(db_file)
+        try:
+            with BubbleClient(config) as client:
+                return _pull_one(db, client, type_name, mode=mode, show_progress=False)
+        except Exception as e:  # ponytail: um worker nunca derruba o pool; vira uma linha vermelha
+            return f"[red]✗ {type_name}:[/] {e}"
+        finally:
+            db.close()
 
     progress = Progress(
         SpinnerColumn(style=ACCENT_PINK),
-        TextColumn(f"[bold {ACCENT}]{type_name}[/]"),
+        TextColumn(f"[bold {ACCENT}]{t('pull.parallel.label', jobs=jobs)}[/]"),
         BarColumn(bar_width=None, complete_style=ACCENT, finished_style="green"),
         TextColumn("[cyan]{task.completed}[/]/[dim]{task.total}[/]"),
         TimeElapsedColumn(),
         console=console,
         transient=False,
     )
-    BATCH_SIZE = 200
     with progress:
-        task = progress.add_task(type_name, total=total)
-        batch: list[dict] = []
-        count = 0
-        try:
-            for rec in client.iter_records(type_name, constraints=constraints):
-                batch.append(rec)
-                count += 1
-                if len(batch) >= BATCH_SIZE:
-                    db.upsert_records(type_name, batch)
-                    batch.clear()
-                progress.update(task, completed=count)
-            if batch:
-                db.upsert_records(type_name, batch)
-                progress.update(task, completed=count)
-        except BubbleAPIError as e:
-            console.print(f"[red]✗ {type_name}:[/] {e}")
-            return
-
-    db.record_sync(type_name)
-    msg_key = (
-        "pull.incremental.saved" if effective_mode == "incremental" else "pull.saved"
-    )
-    console.print(t(msg_key, n=count, type=type_name))
+        task = progress.add_task("pull", total=len(chosen))
+        with ThreadPoolExecutor(max_workers=jobs) as ex:
+            futures = [ex.submit(worker, tn) for tn in chosen]
+            for fut in as_completed(futures):
+                console.print(fut.result())
+                progress.advance(task)
 
 
 def _do_status(folder: Path, config: cfg.Config) -> None:

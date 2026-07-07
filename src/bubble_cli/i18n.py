@@ -122,6 +122,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "pull.mode.no_last_sync": "{type}: no previous sync found — falling back to full.",
         "pull.incremental.empty": "{type}: no changes since last sync.",
         "pull.incremental.saved": "  [green]✓[/] [bold]{n}[/] new/modified records merged into [dim]{type}[/]",
+        "pull.parallel.label": "Downloading tables ({jobs} in parallel)",
 
         # Status
         "status.title": "Bubble CLI — Status",
@@ -258,6 +259,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "pull.mode.no_last_sync": "{type}: sem sync anterior — caindo para modo completo.",
         "pull.incremental.empty": "{type}: nada novo desde o último sync.",
         "pull.incremental.saved": "  [green]✓[/] [bold]{n}[/] registros novos/modificados aplicados em [dim]{type}[/]",
+        "pull.parallel.label": "Baixando tabelas ({jobs} em paralelo)",
 
         # Status
         "status.title": "Bubble CLI — Status",
