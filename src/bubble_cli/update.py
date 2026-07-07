@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+import sys
 from datetime import date
 
 import httpx
@@ -57,8 +58,11 @@ def check_for_update(force: bool = False) -> str | None:
 
 
 def run_self_update() -> bool:
-    """Roda `pipx upgrade bubble-cli`. False se pipx não existe ou o upgrade falha."""
+    """Atualiza via pipx se disponível, senão via pip do interpretador atual. False se falhar."""
     pipx = shutil.which("pipx")
-    if not pipx:
-        return False
-    return subprocess.run([pipx, "upgrade", "bubble-cli"]).returncode == 0
+    if pipx:
+        cmd = [pipx, "upgrade", "bubble-cli"]
+    else:
+        cmd = [sys.executable, "-m", "pip", "install", "-U",
+               "git+https://github.com/moabe-br-2019/bubble_cli.git"]
+    return subprocess.run(cmd).returncode == 0
