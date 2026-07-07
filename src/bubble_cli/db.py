@@ -126,12 +126,12 @@ class Database:
                     """,
                     (type_name, fname, col, ftype, now),
                 )
-                if col not in existing_cols:
+                if col.lower() not in existing_cols:
                     sqlite_type = sqlite_type_for(ftype)
                     cur.execute(
                         f'ALTER TABLE "{table}" ADD COLUMN "{col}" {sqlite_type}'
                     )
-                    existing_cols.add(col)
+                    existing_cols.add(col.lower())
         self.conn.commit()
 
     def _ensure_data_table(self, table: str) -> None:
@@ -141,8 +141,10 @@ class Database:
         self.conn.execute(f'CREATE TABLE IF NOT EXISTS "{table}" ({cols_sql})')
 
     def _existing_columns(self, table: str) -> set[str]:
+        # ponytail: lowercased because SQLite column names are case-insensitive;
+        # comparing raw names would treat "Slug"/"slug" as distinct and crash on ALTER.
         rows = self.conn.execute(f'PRAGMA table_info("{table}")').fetchall()
-        return {r[1] for r in rows}
+        return {r[1].lower() for r in rows}
 
     # ---------- data ----------
 
@@ -173,9 +175,9 @@ class Database:
                     vals.append(_to_sqlite(v))
                     continue
                 col = field_to_col.get(k) or safe_column_name(k)
-                if col not in existing_cols:
+                if col.lower() not in existing_cols:
                     cur.execute(f'ALTER TABLE "{table}" ADD COLUMN "{col}" TEXT')
-                    existing_cols.add(col)
+                    existing_cols.add(col.lower())
                     cur.execute(
                         """
                         INSERT OR IGNORE INTO _fields(type_name, field_name, column_name, bubble_type, first_seen_at)
