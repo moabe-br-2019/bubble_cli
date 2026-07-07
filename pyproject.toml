@@ -1,6 +1,6 @@
 [project]
 name = "bubble-cli"
-version = "0.1.1"
+dynamic = ["version"]
 description = "CLI para extrair dados do Bubble.io via Data API para SQLite"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -17,6 +17,9 @@ bubble = "bubble_cli.cli:cli"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/bubble_cli/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bubble_cli"]
