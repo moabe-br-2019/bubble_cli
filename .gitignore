@@ -47,3 +47,5 @@ bubble.json
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+
+memody.md
