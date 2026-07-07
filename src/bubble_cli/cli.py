@@ -27,8 +27,10 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 from rich.text import Text
 
+from . import __version__
 from . import config as cfg
 from . import prefs as prefs_mod
+from . import update as update_mod
 from .api import BubbleAPIError, BubbleClient
 from .banner import print_banner, print_compact_banner
 from .db import Database
@@ -76,6 +78,36 @@ def _load_config_or_abort(folder: Path) -> cfg.Config:
 # ============================================================
 
 
+def _maybe_notify_update() -> None:
+    """One-line notice if a newer version exists. Silent on network failure."""
+    latest = update_mod.check_for_update()
+    if latest:
+        console.print(
+            f"[{ACCENT_PINK}]↑[/] "
+            + t("update.available", latest=latest, current=__version__)
+            + f" [dim]bubble update[/]"
+        )
+
+
+def _do_update() -> None:
+    latest = update_mod.check_for_update(force=True)
+    if not latest:
+        console.print(f"[green]✓[/] {t('update.up_to_date', current=__version__)}")
+        return
+    console.print(
+        f"[{ACCENT_PINK}]↑[/] {t('update.available', latest=latest, current=__version__)}"
+    )
+    if not Confirm.ask(f"[{ACCENT_PINK}]?[/] {t('update.prompt')}", default=True):
+        return
+    console.print(f"[dim]{t('update.updating')}[/]")
+    if update_mod.run_self_update():
+        console.print(f"[green]✓[/] {t('update.done')}")
+    else:
+        console.print(
+            f"[yellow]![/] {t('update.failed', cmd=update_mod.MANUAL_UPGRADE_CMD)}"
+        )
+
+
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
@@ -86,6 +118,8 @@ def cli(ctx: click.Context):
             interactive_menu(Path.cwd())
         except (KeyboardInterrupt, EOFError):
             console.print(f"\n[dim]{t('bye')}[/]")
+    elif ctx.invoked_subcommand != "update":
+        _maybe_notify_update()
 
 
 @cli.command()
@@ -156,6 +190,12 @@ def pull(
         dry_run=dry_run,
         mode=mode,
     )
+
+
+@cli.command()
+def update():
+    """Check GitHub for a newer version and install it."""
+    _do_update()
 
 
 @cli.command()
@@ -704,6 +744,7 @@ def interactive_menu(starting_folder: Path) -> None:
     """Menu interativo exibido ao rodar `bubble` sem subcomando."""
     print_banner(console, subtitle=t("subtitle.main"))
     console.print()
+    _maybe_notify_update()
 
     current = starting_folder
     first = True
@@ -731,6 +772,7 @@ def interactive_menu(starting_folder: Path) -> None:
                 ("5", "init", t("menu.label.init"), t("menu.desc.init_existing")),
                 ("6", "folder", t("menu.label.folder"), t("menu.desc.folder")),
                 ("7", "settings", t("menu.label.settings"), t("menu.desc.settings")),
+                ("8", "update", t("menu.label.update"), t("menu.desc.update")),
                 ("0", "exit", t("menu.label.exit"), t("menu.desc.exit")),
             ]
         else:
@@ -739,6 +781,7 @@ def interactive_menu(starting_folder: Path) -> None:
                 ("1", "init", t("menu.label.init"), t("menu.desc.init_new")),
                 ("2", "folder", t("menu.label.folder"), t("menu.desc.folder")),
                 ("3", "settings", t("menu.label.settings"), t("menu.desc.settings")),
+                ("4", "update", t("menu.label.update"), t("menu.desc.update")),
                 ("0", "exit", t("menu.label.exit"), t("menu.desc.exit")),
             ]
 
@@ -765,6 +808,9 @@ def interactive_menu(starting_folder: Path) -> None:
             continue
         if action == "settings":
             _do_settings()
+            continue
+        if action == "update":
+            _do_update()
             continue
         if action == "init":
             new_folder = _do_init(current)

@@ -138,6 +138,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "settings.lang_choose": "Choose language",
         "settings.lang_saved": "Language saved to {path}",
         "settings.cancel": "Cancel",
+
+        # Update
+        "update.available": "New version {latest} available (you have {current}).",
+        "update.prompt": "Update now?",
+        "update.updating": "Updating…",
+        "update.done": "Updated. Restart the command to use the new version.",
+        "update.failed": "Auto-update failed. Update manually:\n  {cmd}",
+        "update.up_to_date": "Already on the latest version ({current}).",
+        "menu.label.update": "Update",
+        "menu.desc.update": "Check for and install a new version",
     },
     "pt": {
         # General
@@ -264,6 +274,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "settings.lang_choose": "Escolha o idioma",
         "settings.lang_saved": "Idioma salvo em {path}",
         "settings.cancel": "Cancelar",
+
+        # Update
+        "update.available": "Nova versão {latest} disponível (você tem {current}).",
+        "update.prompt": "Atualizar agora?",
+        "update.updating": "Atualizando…",
+        "update.done": "Atualizado. Rode o comando de novo para usar a nova versão.",
+        "update.failed": "Auto-update falhou. Atualize manualmente:\n  {cmd}",
+        "update.up_to_date": "Você já está na versão mais recente ({current}).",
+        "menu.label.update": "Atualizar",
+        "menu.desc.update": "Verificar e instalar nova versão",
     },
 }
 

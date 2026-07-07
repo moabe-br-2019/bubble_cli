@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Iterator, Optional
+from urllib.parse import quote
 
 import httpx
 
@@ -47,7 +48,7 @@ class BubbleClient:
         params: dict[str, Any] = {"limit": 1, "cursor": 0}
         if constraints:
             params["constraints"] = json.dumps(constraints)
-        r = self._client.get(f"/obj/{type_name}", params=params)
+        r = self._client.get(f"/obj/{quote(type_name, safe='')}", params=params)
         if r.status_code != 200:
             raise BubbleAPIError(
                 f"GET {type_name} falhou ({r.status_code}): {r.text[:200]}"
@@ -65,7 +66,7 @@ class BubbleClient:
             params: dict[str, Any] = {"cursor": cursor, "limit": PAGE_SIZE}
             if constraints:
                 params["constraints"] = json.dumps(constraints)
-            r = self._client.get(f"/obj/{type_name}", params=params)
+            r = self._client.get(f"/obj/{quote(type_name, safe='')}", params=params)
             if r.status_code != 200:
                 raise BubbleAPIError(
                     f"GET {type_name} falhou ({r.status_code}): {r.text[:200]}"
