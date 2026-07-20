@@ -23,3 +23,8 @@ path = "src/bubble_cli/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bubble_cli"]
+
+[tool.pytest.ini_options]
+# Sem isso o pytest importa a cópia instalada em site-packages, não o working tree.
+pythonpath = ["src"]
+testpaths = ["tests"]

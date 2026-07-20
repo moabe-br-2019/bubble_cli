@@ -428,23 +428,27 @@ def _do_pull(
             )
 
         # Decide modo (full vs incremental) quando não passado explicitamente.
-        if not dry_run:
+        if dry_run:
+            # Preview não pergunta nada: "auto" vira full, mas modo explícito é respeitado.
+            resolved_mode = mode if mode in ("full", "incremental") else "full"
+        else:
             resolved_mode = _resolve_pull_mode(db, mode)
             if resolved_mode is None:
                 console.print(f"[yellow]{t('common.cancelled')}[/]")
                 return
-        else:
-            resolved_mode = "full"
 
         if dry_run:
             with BubbleClient(config) as client:
                 for type_name in chosen:
+                    constraints, _ = _incremental_constraints(
+                        db, type_name, resolved_mode, verbose=True
+                    )
                     with console.status(
                         f"[{ACCENT}]{t('pull.counting', type=type_name)}[/]",
                         spinner="dots",
                     ):
                         try:
-                            total = client.count(type_name)
+                            total = client.count(type_name, constraints=constraints)
                         except BubbleAPIError as e:
                             console.print(f"[red]✗ {type_name}:[/] {e}")
                             continue
@@ -515,6 +519,34 @@ def _ask_pull_mode() -> Optional[str]:
     return key
 
 
+def _incremental_constraints(
+    db: Database,
+    type_name: str,
+    mode: str,
+    *,
+    verbose: bool = True,
+) -> tuple[Optional[list[dict]], str]:
+    """Constraints do modo incremental + modo efetivo (cai para full sem sync anterior)."""
+    if mode != "incremental":
+        return None, mode
+
+    since = db.get_last_sync(type_name)
+    if not since or not db.type_has_data(type_name):
+        if verbose:
+            console.print(f"[dim]{t('pull.mode.no_last_sync', type=type_name)}[/]")
+        return None, "full"
+
+    if verbose:
+        console.print(f"[dim]{t('pull.mode.using_incremental', since=since)}[/]")
+    return [
+        {
+            "key": "Modified Date",
+            "constraint_type": "greater than",
+            "value": since,
+        }
+    ], "incremental"
+
+
 def _pull_one(
     db: Database,
     client: BubbleClient,
@@ -524,25 +556,9 @@ def _pull_one(
     show_progress: bool = True,
 ) -> str:
     """Baixa um tipo e devolve a linha-resumo (Rich markup). Só desenha barra se show_progress."""
-    constraints: Optional[list[dict]] = None
-    effective_mode = mode
-
-    if mode == "incremental":
-        since = db.get_last_sync(type_name)
-        if not since or not db.type_has_data(type_name):
-            if show_progress:
-                console.print(f"[dim]{t('pull.mode.no_last_sync', type=type_name)}[/]")
-            effective_mode = "full"
-        else:
-            constraints = [
-                {
-                    "key": "Modified Date",
-                    "constraint_type": "greater than",
-                    "value": since,
-                }
-            ]
-            if show_progress:
-                console.print(f"[dim]{t('pull.mode.using_incremental', since=since)}[/]")
+    constraints, effective_mode = _incremental_constraints(
+        db, type_name, mode, verbose=show_progress
+    )
 
     try:
         total = client.count(type_name, constraints=constraints)
