@@ -150,6 +150,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "whatsnew.title": "What's new in {version}",
         "menu.label.update": "Update",
         "menu.desc.update": "Check for and install a new version",
+
+        # MCP
+        "menu.label.mcp": "MCP",
+        "menu.desc.mcp": "Use this CLI from AI clients (setup guide)",
+        "mcp.title": "MCP server",
+        "mcp.what": "Expose this CLI as a tool for AI clients (Claude Code, Claude Desktop...):\nthe AI runs scan, list, pull etc. for you.",
+        "mcp.step_install": "Install the MCP SDK:",
+        "mcp.step_register": "Register the server (Claude Code example):",
+        "mcp.step_use": "Restart the AI client and ask things like \"list my Bubble types\".",
     },
     "pt": {
         # General
@@ -288,6 +297,15 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "whatsnew.title": "Novidades da versão {version}",
         "menu.label.update": "Atualizar",
         "menu.desc.update": "Verificar e instalar nova versão",
+
+        # MCP
+        "menu.label.mcp": "MCP",
+        "menu.desc.mcp": "Usar esta CLI a partir de clientes de IA (guia de setup)",
+        "mcp.title": "Servidor MCP",
+        "mcp.what": "Expõe esta CLI como ferramenta para clientes de IA (Claude Code, Claude Desktop...):\na IA roda scan, list, pull etc. por você.",
+        "mcp.step_install": "Instale o SDK do MCP:",
+        "mcp.step_register": "Registre o servidor (exemplo com Claude Code):",
+        "mcp.step_use": "Reinicie o cliente de IA e peça coisas como \"liste meus types do Bubble\".",
     },
 }
 

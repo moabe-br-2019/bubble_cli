@@ -30,6 +30,16 @@ def _parse(v: str) -> tuple[int, ...]:
 # Notas por versão, mostradas uma única vez logo após o usuário atualizar.
 # Adicione uma entrada aqui a cada release (en + pt).
 CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.8": {
+        "en": [
+            "New MCP menu item: setup guide to use the CLI from AI clients",
+            "MCP server now ships inside the package (python -m bubble_cli.mcp_server)",
+        ],
+        "pt": [
+            "Novo item MCP no menu: guia para usar a CLI a partir de clientes de IA",
+            "Servidor MCP agora vem dentro do pacote (python -m bubble_cli.mcp_server)",
+        ],
+    },
     "0.1.7": {
         "en": [
             "BUBBLE_LANG env var now overrides the saved language preference",

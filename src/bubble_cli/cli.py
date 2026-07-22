@@ -83,6 +83,20 @@ def _load_config_or_abort(folder: Path) -> cfg.Config:
 # ============================================================
 
 
+def _do_mcp() -> None:
+    """Guia de setup do servidor MCP embutido."""
+    cmd = f"claude mcp add bubble -- {sys.executable} -m bubble_cli.mcp_server"
+    body = (
+        f"{t('mcp.what')}\n\n"
+        f"[bold]1.[/] {t('mcp.step_install')}\n   [{ACCENT_BLUE}]pip install mcp[/]\n"
+        f"[bold]2.[/] {t('mcp.step_register')}\n   [{ACCENT_BLUE}]{cmd}[/]\n"
+        f"[bold]3.[/] {t('mcp.step_use')}"
+    )
+    console.print(
+        Panel(body, title=t("mcp.title"), border_style=ACCENT, expand=False)
+    )
+
+
 def _maybe_show_whats_new() -> None:
     """Painel de novidades, exibido uma única vez logo após uma atualização."""
     prefs = prefs_mod.load_prefs()
@@ -879,7 +893,8 @@ def interactive_menu(starting_folder: Path) -> None:
                 ("5", "init", t("menu.label.init"), t("menu.desc.init_existing")),
                 ("6", "folder", t("menu.label.folder"), t("menu.desc.folder")),
                 ("7", "settings", t("menu.label.settings"), t("menu.desc.settings")),
-                ("8", "update", t("menu.label.update"), t("menu.desc.update")),
+                ("8", "mcp", t("menu.label.mcp"), t("menu.desc.mcp")),
+                ("9", "update", t("menu.label.update"), t("menu.desc.update")),
                 ("0", "exit", t("menu.label.exit"), t("menu.desc.exit")),
             ]
         else:
@@ -888,7 +903,8 @@ def interactive_menu(starting_folder: Path) -> None:
                 ("1", "init", t("menu.label.init"), t("menu.desc.init_new")),
                 ("2", "folder", t("menu.label.folder"), t("menu.desc.folder")),
                 ("3", "settings", t("menu.label.settings"), t("menu.desc.settings")),
-                ("4", "update", t("menu.label.update"), t("menu.desc.update")),
+                ("4", "mcp", t("menu.label.mcp"), t("menu.desc.mcp")),
+                ("5", "update", t("menu.label.update"), t("menu.desc.update")),
                 ("0", "exit", t("menu.label.exit"), t("menu.desc.exit")),
             ]
 
@@ -915,6 +931,9 @@ def interactive_menu(starting_folder: Path) -> None:
             continue
         if action == "settings":
             _do_settings()
+            continue
+        if action == "mcp":
+            _do_mcp()
             continue
         if action == "update":
             _do_update()
