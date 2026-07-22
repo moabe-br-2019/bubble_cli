@@ -79,6 +79,32 @@ def _load_config_or_abort(folder: Path) -> cfg.Config:
 # ============================================================
 
 
+def _maybe_show_whats_new() -> None:
+    """Painel de novidades, exibido uma única vez logo após uma atualização."""
+    prefs = prefs_mod.load_prefs()
+    old = prefs.get("last_run_version")
+    if old != __version__:
+        prefs["last_run_version"] = __version__
+        prefs_mod.save_prefs(prefs)
+    if not old or old == __version__:
+        return  # primeira execução ou versão inalterada
+    entries = update_mod.whats_new_since(old, get_lang())
+    if not entries:
+        return
+    body = "\n".join(
+        f"[bold]{ver}[/]\n" + "\n".join(f"  • {note}" for note in notes)
+        for ver, notes in entries
+    )
+    console.print(
+        Panel(
+            body,
+            title=t("whatsnew.title", version=__version__),
+            border_style=ACCENT,
+            expand=False,
+        )
+    )
+
+
 def _maybe_notify_update() -> None:
     """One-line notice if a newer version exists. Silent on network failure."""
     latest = update_mod.check_for_update()
@@ -120,6 +146,7 @@ def cli(ctx: click.Context):
         except (KeyboardInterrupt, EOFError):
             console.print(f"\n[dim]{t('bye')}[/]")
     elif ctx.invoked_subcommand != "update":
+        _maybe_show_whats_new()
         _maybe_notify_update()
 
 
@@ -819,6 +846,7 @@ def interactive_menu(starting_folder: Path) -> None:
     """Menu interativo exibido ao rodar `bubble` sem subcomando."""
     print_banner(console, subtitle=t("subtitle.main"))
     console.print()
+    _maybe_show_whats_new()
     _maybe_notify_update()
 
     current = starting_folder

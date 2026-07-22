@@ -26,6 +26,36 @@ def _parse(v: str) -> tuple[int, ...]:
     return tuple(int(x) for x in re.findall(r"\d+", v)[:3]) or (0,)
 
 
+# ── What's new ──────────────────────────────────────────────
+# Notas por versão, mostradas uma única vez logo após o usuário atualizar.
+# Adicione uma entrada aqui a cada release (en + pt).
+CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.5": {
+        "en": [
+            "Parallel table download in pull (-j/--jobs)",
+            "Automatic retry with backoff on 429/5xx errors",
+            "--dry-run now respects --mode incremental",
+        ],
+        "pt": [
+            "Download de tabelas em paralelo no pull (-j/--jobs)",
+            "Retry automático com backoff em erros 429/5xx",
+            "--dry-run agora respeita --mode incremental",
+        ],
+    },
+}
+
+
+def whats_new_since(old: str, lang: str) -> list[tuple[str, list[str]]]:
+    """Entradas do CHANGELOG com old < versão <= instalada, mais antigas primeiro."""
+    entries = [
+        (ver, notes.get(lang) or notes.get("en") or [])
+        for ver, notes in CHANGELOG.items()
+        if _parse(old) < _parse(ver) <= _parse(__version__)
+    ]
+    entries.sort(key=lambda e: _parse(e[0]))
+    return entries
+
+
 def fetch_latest() -> str | None:
     """Lê __version__ do main no GitHub. None em qualquer falha de rede."""
     try:
