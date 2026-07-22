@@ -53,11 +53,15 @@ def _db_filename_from(app_id: str) -> str:
 
 
 def _bootstrap_lang() -> None:
-    """Resolve idioma: prefs salva → env BUBBLE_LANG → auto-detect → en."""
+    """Resolve idioma: env BUBBLE_LANG → prefs salva → auto-detect → en.
+
+    Env vem antes da pref: BUBBLE_LANG é o canal programático por invocação
+    (ex.: servidor MCP), a pref é só o default salvo.
+    """
     prefs = prefs_mod.load_prefs()
     lang = (
-        prefs.get("lang")
-        or os.environ.get("BUBBLE_LANG")
+        os.environ.get("BUBBLE_LANG")
+        or prefs.get("lang")
         or detect_lang()
     )
     set_lang(lang)

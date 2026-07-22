@@ -30,6 +30,16 @@ def _parse(v: str) -> tuple[int, ...]:
 # Notas por versão, mostradas uma única vez logo após o usuário atualizar.
 # Adicione uma entrada aqui a cada release (en + pt).
 CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.7": {
+        "en": [
+            "BUBBLE_LANG env var now overrides the saved language preference",
+            "MCP server: fixed hang, output encoding and language selection",
+        ],
+        "pt": [
+            "Env BUBBLE_LANG agora tem prioridade sobre o idioma salvo nas preferências",
+            "Servidor MCP: corrigidos travamento, encoding do output e seleção de idioma",
+        ],
+    },
     "0.1.6": {
         "en": [
             "This panel: release notes shown once right after an update",
