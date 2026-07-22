@@ -30,6 +30,16 @@ def _parse(v: str) -> tuple[int, ...]:
 # Notas por versão, mostradas uma única vez logo após o usuário atualizar.
 # Adicione uma entrada aqui a cada release (en + pt).
 CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.6": {
+        "en": [
+            "This panel: release notes shown once right after an update",
+            "MCP server (mcp_server.py) exposing the CLI to AI clients",
+        ],
+        "pt": [
+            "Este painel: notas da versão exibidas uma vez logo após atualizar",
+            "Servidor MCP (mcp_server.py) expondo a CLI para clientes de IA",
+        ],
+    },
     "0.1.5": {
         "en": [
             "Parallel table download in pull (-j/--jobs)",

@@ -8,7 +8,8 @@ def test_shows_versions_between_old_and_current():
 
 
 def test_nothing_when_already_current():
-    assert update.whats_new_since("0.1.5", "en") == []
+    from bubble_cli import __version__
+    assert update.whats_new_since(__version__, "en") == []
 
 
 def test_falls_back_to_english_for_unknown_lang():
