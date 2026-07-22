@@ -30,6 +30,16 @@ def _parse(v: str) -> tuple[int, ...]:
 # Notas por versão, mostradas uma única vez logo após o usuário atualizar.
 # Adicione uma entrada aqui a cada release (en + pt).
 CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.9": {
+        "en": [
+            "New export command: tables to CSV (Excel-compatible), CLI and menu",
+            "MCP: new query tool — read-only SQL over the local SQLite mirror",
+        ],
+        "pt": [
+            "Novo comando export: tabelas para CSV (compatível com Excel), CLI e menu",
+            "MCP: novo tool query — SQL somente leitura no espelho SQLite local",
+        ],
+    },
     "0.1.8": {
         "en": [
             "New MCP menu item: setup guide to use the CLI from AI clients",

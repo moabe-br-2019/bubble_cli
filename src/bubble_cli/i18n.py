@@ -44,6 +44,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "menu.desc.list": "List discovered types",
         "menu.label.pull": "Pull",
         "menu.desc.pull": "Download data",
+        "menu.label.export": "Export",
+        "menu.desc.export": "Export tables to CSV (opens in Excel)",
         "menu.label.init": "Init",
         "menu.desc.init_existing": "Reconfigure (creates a new bubble.json)",
         "menu.desc.init_new": "Create new project here (or in a subfolder)",
@@ -95,6 +97,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "list.col.last_sync": "Last sync",
         "list.col.count": "Records",
         "list.empty": "No types discovered. Run [bold {accent_blue}]scan[/] first.",
+
+        # Export
+        "export.types_prompt": "Types to export [dim](comma-separated, empty = all)[/]",
+        "export.empty": "No data to export. Run [bold {accent_blue}]pull[/] first.",
+        "export.file": "  [green]✓[/] {path} [dim]({n} rows)[/]",
+        "export.done": "Exported [bold {accent}]{n}[/] file(s) to {dir}",
 
         # Pull
         "pull.schema_empty": "Schema empty. Run [bold {accent_blue}]scan[/] first.",
@@ -191,6 +199,8 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "menu.desc.list": "Listar tipos descobertos",
         "menu.label.pull": "Pull",
         "menu.desc.pull": "Baixar dados",
+        "menu.label.export": "Exportar",
+        "menu.desc.export": "Exportar tabelas para CSV (abre no Excel)",
         "menu.label.init": "Init",
         "menu.desc.init_existing": "Reconfigurar (cria novo bubble.json)",
         "menu.desc.init_new": "Criar novo projeto aqui (ou em subpasta)",
@@ -242,6 +252,12 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "list.col.last_sync": "Último sync",
         "list.col.count": "Registros",
         "list.empty": "Nenhum tipo descoberto. Rode [bold {accent_blue}]scan[/] primeiro.",
+
+        # Export
+        "export.types_prompt": "Tipos a exportar [dim](separados por vírgula, vazio = todos)[/]",
+        "export.empty": "Nada para exportar. Rode [bold {accent_blue}]pull[/] primeiro.",
+        "export.file": "  [green]✓[/] {path} [dim]({n} linhas)[/]",
+        "export.done": "[bold {accent}]{n}[/] arquivo(s) exportado(s) em {dir}",
 
         # Pull
         "pull.schema_empty": "Schema vazio. Rode [bold {accent_blue}]scan[/] antes.",

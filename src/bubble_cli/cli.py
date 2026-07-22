@@ -249,6 +249,22 @@ def pull(
 
 
 @cli.command()
+@click.option("--folder", type=click.Path(file_okay=False, path_type=Path), default=None)
+@click.option("--types", "types_csv", default=None, help="Types to export (comma-separated; default: all).")
+@click.option(
+    "--out",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=None,
+    help="Output directory (default: ./exports).",
+)
+def export(folder: Optional[Path], types_csv: Optional[str], out: Optional[Path]):
+    """Export downloaded tables to CSV files (Excel-compatible)."""
+    folder = folder or Path.cwd()
+    config = _load_config_or_abort(folder)
+    _do_export(folder, config, types_csv=types_csv, out=out)
+
+
+@cli.command()
 def update():
     """Check GitHub for a newer version and install it."""
     _do_update()
@@ -426,6 +442,54 @@ def _do_list(folder: Path, config: cfg.Config) -> None:
             str(count) if count is not None else "—",
         )
     console.print(table)
+
+
+def _do_export(
+    folder: Path,
+    config: cfg.Config,
+    *,
+    types_csv: Optional[str] = None,
+    out: Optional[Path] = None,
+) -> None:
+    import csv
+
+    out_dir = out or (folder / "exports")
+    with Database(folder / config.db_path) as db:
+        pairs = db.conn.execute(
+            "SELECT type_name, table_name FROM _types ORDER BY type_name"
+        ).fetchall()
+        if types_csv:
+            wanted = {t_.strip() for t_ in types_csv.split(",") if t_.strip()}
+            unknown = sorted(wanted - {name for name, _ in pairs})
+            if unknown:
+                console.print(
+                    f"[red]✗[/] {t('err.unknown_types', names=', '.join(unknown))}"
+                )
+                return
+            pairs = [p for p in pairs if p[0] in wanted]
+
+        exported = 0
+        for _type_name, table in pairs:
+            cur = db.conn.execute(f'SELECT * FROM "{table}"')
+            rows = cur.fetchall()
+            if not rows:
+                continue
+            out_dir.mkdir(parents=True, exist_ok=True)
+            path = out_dir / f"{table}.csv"
+            # utf-8-sig (BOM): Excel abre acentos corretamente com duplo clique
+            with path.open("w", newline="", encoding="utf-8-sig") as f:
+                writer = csv.writer(f)
+                writer.writerow([d[0] for d in cur.description])
+                writer.writerows(rows)
+            console.print(t("export.file", path=path, n=len(rows)))
+            exported += 1
+
+    if exported:
+        console.print(
+            f"[green]✓[/] {t('export.done', n=exported, dir=out_dir, accent=ACCENT)}"
+        )
+    else:
+        console.print(f"[yellow]![/] {t('export.empty', accent_blue=ACCENT_BLUE)}")
 
 
 def _do_pull(
@@ -890,11 +954,12 @@ def interactive_menu(starting_folder: Path) -> None:
                 ("2", "scan", t("menu.label.scan"), t("menu.desc.scan")),
                 ("3", "list", t("menu.label.list"), t("menu.desc.list")),
                 ("4", "pull", t("menu.label.pull"), t("menu.desc.pull")),
-                ("5", "init", t("menu.label.init"), t("menu.desc.init_existing")),
-                ("6", "folder", t("menu.label.folder"), t("menu.desc.folder")),
-                ("7", "settings", t("menu.label.settings"), t("menu.desc.settings")),
-                ("8", "mcp", t("menu.label.mcp"), t("menu.desc.mcp")),
-                ("9", "update", t("menu.label.update"), t("menu.desc.update")),
+                ("5", "export", t("menu.label.export"), t("menu.desc.export")),
+                ("6", "init", t("menu.label.init"), t("menu.desc.init_existing")),
+                ("7", "folder", t("menu.label.folder"), t("menu.desc.folder")),
+                ("8", "settings", t("menu.label.settings"), t("menu.desc.settings")),
+                ("9", "mcp", t("menu.label.mcp"), t("menu.desc.mcp")),
+                ("10", "update", t("menu.label.update"), t("menu.desc.update")),
                 ("0", "exit", t("menu.label.exit"), t("menu.desc.exit")),
             ]
         else:
@@ -954,6 +1019,11 @@ def interactive_menu(starting_folder: Path) -> None:
             _do_list(current, config)
         elif action == "pull":
             _do_pull(current, config)
+        elif action == "export":
+            names = Prompt.ask(
+                f"[{ACCENT_PINK}]?[/] {t('export.types_prompt')}", default=""
+            )
+            _do_export(current, config, types_csv=names or None)
 
 
 if __name__ == "__main__":
