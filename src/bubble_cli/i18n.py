@@ -167,6 +167,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "mcp.step_install": "Install the MCP SDK:",
         "mcp.step_register": "Register the server (Claude Code example):",
         "mcp.step_use": "Restart the AI client and ask things like \"list my Bubble types\".",
+        "mcp.activate_q": "Activate MCP now? (installs and registers automatically)",
+        "mcp.dep_ok": "MCP SDK already installed.",
+        "mcp.dep_installing": "Installing MCP SDK (pip install mcp)...",
+        "mcp.dep_installed": "MCP SDK installed.",
+        "mcp.dep_fail": "Failed to install the MCP SDK:",
+        "mcp.no_claude": "claude CLI not found — register manually in your AI client:",
+        "mcp.registered": "MCP server registered in Claude Code.",
     },
     "pt": {
         # General
@@ -322,6 +329,13 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "mcp.step_install": "Instale o SDK do MCP:",
         "mcp.step_register": "Registre o servidor (exemplo com Claude Code):",
         "mcp.step_use": "Reinicie o cliente de IA e peça coisas como \"liste meus types do Bubble\".",
+        "mcp.activate_q": "Ativar o MCP agora? (instala e registra automaticamente)",
+        "mcp.dep_ok": "SDK do MCP já instalado.",
+        "mcp.dep_installing": "Instalando SDK do MCP (pip install mcp)...",
+        "mcp.dep_installed": "SDK do MCP instalado.",
+        "mcp.dep_fail": "Falha ao instalar o SDK do MCP:",
+        "mcp.no_claude": "CLI claude não encontrada — registre manualmente no seu cliente de IA:",
+        "mcp.registered": "Servidor MCP registrado no Claude Code.",
     },
 }
 

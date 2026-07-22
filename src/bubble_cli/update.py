@@ -30,6 +30,16 @@ def _parse(v: str) -> tuple[int, ...]:
 # Notas por versão, mostradas uma única vez logo após o usuário atualizar.
 # Adicione uma entrada aqui a cada release (en + pt).
 CHANGELOG: dict[str, dict[str, list[str]]] = {
+    "0.1.10": {
+        "en": [
+            "One-click MCP activation: installs the SDK and registers in Claude Code",
+            "Init now offers to activate MCP at the end (default: yes)",
+        ],
+        "pt": [
+            "Ativação do MCP em um clique: instala o SDK e registra no Claude Code",
+            "Init agora oferece ativar o MCP no final (padrão: sim)",
+        ],
+    },
     "0.1.9": {
         "en": [
             "New export command: tables to CSV (Excel-compatible), CLI and menu",

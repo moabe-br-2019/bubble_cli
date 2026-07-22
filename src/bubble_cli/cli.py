@@ -83,6 +83,46 @@ def _load_config_or_abort(folder: Path) -> cfg.Config:
 # ============================================================
 
 
+def _activate_mcp() -> None:
+    """Instala o SDK mcp (se faltar) e registra o servidor no Claude Code."""
+    import importlib.util
+    import shutil
+    import subprocess
+
+    if importlib.util.find_spec("mcp") is not None:
+        console.print(f"[green]✓[/] {t('mcp.dep_ok')}")
+    else:
+        with console.status(f"[{ACCENT}]{t('mcp.dep_installing')}[/]", spinner="dots"):
+            r = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "mcp"],
+                capture_output=True, text=True,
+            )
+        if r.returncode != 0:
+            console.print(
+                f"[red]✗[/] {t('mcp.dep_fail')}\n[dim]{r.stderr.strip()[-500:]}[/]"
+            )
+            return
+        console.print(f"[green]✓[/] {t('mcp.dep_installed')}")
+
+    manual_cmd = f"claude mcp add bubble -- {sys.executable} -m bubble_cli.mcp_server"
+    claude = shutil.which("claude")
+    if not claude:
+        console.print(
+            f"[yellow]![/] {t('mcp.no_claude')}\n   [{ACCENT_BLUE}]{manual_cmd}[/]"
+        )
+        return
+    r = subprocess.run(
+        [claude, "mcp", "add", "bubble", "--", sys.executable, "-m", "bubble_cli.mcp_server"],
+        capture_output=True, text=True,
+    )
+    output = (r.stdout + r.stderr).strip()
+    if r.returncode == 0 or "already exists" in output:
+        console.print(f"[green]✓[/] {t('mcp.registered')}")
+        console.print(f"[dim]{t('mcp.step_use')}[/]")
+    else:
+        console.print(f"[red]✗[/] {output[-500:]}")
+
+
 def _do_mcp() -> None:
     """Guia de setup do servidor MCP embutido."""
     cmd = f"claude mcp add bubble -- {sys.executable} -m bubble_cli.mcp_server"
@@ -95,6 +135,8 @@ def _do_mcp() -> None:
     console.print(
         Panel(body, title=t("mcp.title"), border_style=ACCENT, expand=False)
     )
+    if Confirm.ask(f"[{ACCENT_PINK}]?[/] {t('mcp.activate_q')}", default=True):
+        _activate_mcp()
 
 
 def _maybe_show_whats_new() -> None:
@@ -360,6 +402,10 @@ def _do_init(starting_folder: Path) -> Optional[Path]:
     if Confirm.ask(f"[{ACCENT_PINK}]?[/] {t('init.run_scan_q')}", default=True):
         console.print()
         _do_scan(target, config)
+
+    console.print()
+    if Confirm.ask(f"[{ACCENT_PINK}]?[/] {t('mcp.activate_q')}", default=True):
+        _activate_mcp()
 
     return target
 
